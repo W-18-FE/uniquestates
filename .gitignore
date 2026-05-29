@@ -38,7 +38,7 @@ db.sqlite3-journal
 /staticfiles
 
 # Environment variables
-.env
+# .env file is committed for deployment defaults
 .env.local
 .env.*.local
 
