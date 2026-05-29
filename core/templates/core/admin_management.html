@@ -1,0 +1,119 @@
+{% extends 'core/base.html' %}
+{% block title %}Admin Management{% endblock %}
+{% block content %}
+
+<style>
+  body { background: #0a0f1e !important; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  .mgmt-container { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+  .page-title { font-size: 1.8rem; font-weight: 700; color: #fbbf24; text-shadow: 0 0 12px rgba(251, 191, 36, 0.4); letter-spacing: 0.5px; }
+  .search-form { display: flex; gap: 0.5rem; flex: 1; max-width: 500px; }
+  .search-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 0.6rem; padding: 0.6rem 1rem; color: white; outline: none; font-size: 0.9rem; }
+  .search-input:focus { border-color: #fbbf24; }
+  .search-btn { background: linear-gradient(135deg, #fbbf24, #d97706); border: none; color: #1a1a2e; padding: 0.6rem 1.2rem; border-radius: 0.6rem; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: rgba(18, 28, 46, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1.2rem; text-align: center; }
+  .stat-number { font-size: 2rem; font-weight: 800; color: #fbbf24; }
+  .stat-label { color: #6b7280; font-size: 0.85rem; margin-top: 0.3rem; }
+  .section-title { font-size: 1.3rem; font-weight: 700; color: #e0f0ff; margin: 1.5rem 0 1rem; }
+  .admin-card { background: rgba(18, 28, 46, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.2rem; padding: 1.5rem; margin-bottom: 1rem; }
+  .admin-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0.8rem; }
+  .admin-name { font-size: 1.2rem; font-weight: 700; color: #fbbf24; margin: 0; }
+  .badge { padding: 0.2rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .badge-approved { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-pending { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+  .admin-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+  .detail-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .detail-label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-value { color: #e0f0ff; font-size: 0.9rem; }
+  .user-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: rgba(18, 28, 46, 0.6); border-radius: 1rem; overflow: hidden; }
+  .user-table th { background: rgba(251, 191, 36, 0.1); padding: 0.8rem; text-align: left; color: #fbbf24; font-size: 0.8rem; text-transform: uppercase; }
+  .user-table td { padding: 0.7rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e0f0ff; font-size: 0.85rem; }
+  .no-results { text-align: center; color: #6b7280; padding: 2rem; }
+</style>
+
+<div class="mgmt-container">
+  <div class="page-header">
+    <h1 class="page-title">Admin Management</h1>
+    <form method="get" class="search-form">
+      <input type="text" name="search" class="search-input" placeholder="Search by admin name, estate, or location..." value="{{ search }}">
+      <button type="submit" class="search-btn">Search</button>
+    </form>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number">{{ total_admins }}</div>
+      <div class="stat-label">Total Estate Admins</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ total_independent }}</div>
+      <div class="stat-label">Independent Users</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Estate Admins & Their Estates</h2>
+  {% if admin_data %}
+    {% for item in admin_data %}
+    <div class="admin-card">
+      <div class="admin-header">
+        <p class="admin-name">{{ item.admin.user.get_full_name|default:item.admin.user.username }}</p>
+        {% if item.admin.is_subscribed %}
+          <span class="badge badge-approved">Approved</span>
+        {% else %}
+          <span class="badge badge-pending">Pending</span>
+        {% endif %}
+      </div>
+      <div class="admin-details">
+        <div class="detail-item">
+          <span class="detail-label">Estate</span>
+          <span class="detail-value">{{ item.estate.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Location</span>
+          <span class="detail-value">{{ item.estate.location|default:"Not set" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Users Managed</span>
+          <span class="detail-value">{{ item.user_count }} residents</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Approved By</span>
+          <span class="detail-value">{{ item.admin.approved_by.username|default:"Pending" }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="no-results">No estate admins found.</div>
+  {% endif %}
+
+  <h2 class="section-title">Independent Users (No Admin)</h2>
+  {% if independent_users %}
+    <div style="overflow-x: auto;">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Estate</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in independent_users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email|default:"—" }}</td>
+            <td>{{ user.userprofile.estate.name|default:"—" }}</td>
+            <td>{{ user.userprofile.estate.location|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="no-results">No independent users found.</div>
+  {% endif %}
+</div>
+{% endblock %}

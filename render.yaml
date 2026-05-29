@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: estatelink
+    runtime: python310
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.14
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        fromDatabase:
+          name: postgres
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        sync: false
+
+databases:
+  - name: postgres
+    ipAllowList: []
