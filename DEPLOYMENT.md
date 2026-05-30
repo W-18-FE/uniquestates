@@ -40,10 +40,10 @@ git push -u origin main
    - **Build Command**: `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py create_superuser`
    - **Start Command**: `gunicorn config.wsgi:application`
 
-4. **Set Environment Variables** (Click on Environment)
+4. **Environment Variables** (Already configured in .env file, but you can override on Render if needed)
    ```
    DEBUG = False
-   SECRET_KEY = (Generate a strong secret key - use a random string generator)
+   SECRET_KEY = (from .env - django-insecure-9x#@$%^&*()_+-=[]{}|;:,.<>?/~`felixestatelink2026)
    ALLOWED_HOSTS = estatelink-app.onrender.com,localhost,127.0.0.1
    CSRF_TRUSTED_ORIGINS = https://estatelink-app.onrender.com,http://localhost
    ```
@@ -67,7 +67,7 @@ After deployment completes:
 2. **Login to Admin Panel**
    - Go to: https://estatelink-app.onrender.com/admin/
    - **Username**: felix
-   - **Password**: 171630m@felix
+   - **Password**: 171630m
    - **Email**: felixochieng5785@gmail.com
 
 ## Important Notes

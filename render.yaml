@@ -11,11 +11,11 @@ services:
       - key: DEBUG
         value: "False"
       - key: SECRET_KEY
-        fromDatabase:
-          name: postgres
-          property: connectionString
+        value: 'django-insecure-9x#@$%^&*()_+-=[]{}|;:,.<>?/~`felixestatelink2026'
       - key: ALLOWED_HOSTS
-        sync: false
+        value: "estatelink-app.onrender.com,localhost,127.0.0.1"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://estatelink-app.onrender.com,http://localhost,http://127.0.0.1"
 
 databases:
   - name: postgres

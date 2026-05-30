@@ -69,7 +69,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions on Rende
 
 ### Default Superuser (Render)
 - **Username**: felix
-- **Password**: 171630m@felix
+- **Password**: 171630m
 - **Email**: felixochieng5785@gmail.com
 
 ## Project Structure
