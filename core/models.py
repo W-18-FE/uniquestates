@@ -195,6 +195,99 @@ class CustomTab(models.Model):
         return f"{self.name} ({self.estate.name})"
 
 
+class ShopOwner(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shop_owner')
+    estate = models.ForeignKey(Estate, on_delete=models.CASCADE, related_name='shop_owners')
+    shop_name = models.CharField(max_length=200)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.shop_name
+
+
+class ShopItem(models.Model):
+    shop_owner = models.ForeignKey(ShopOwner, on_delete=models.CASCADE, related_name='shop_items')
+    item_name = models.CharField(max_length=200)
+    quantity_available = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.item_name} - {self.shop_owner.shop_name}"
+
+
+class ShopOrder(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Accepted', 'Accepted'),
+        ('Declined', 'Declined'),
+        ('Delivered', 'Delivered'),
+    ]
+    
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shop_orders')
+    shop_item = models.ForeignKey(ShopItem, on_delete=models.CASCADE, related_name='orders')
+    shop_owner = models.ForeignKey(ShopOwner, on_delete=models.CASCADE, related_name='received_shop_orders')
+    quantity_ordered = models.IntegerField()
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, default='Pending', choices=STATUS_CHOICES)
+    response_reason = models.TextField(blank=True)
+    delivery_time = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order {self.id} - {self.customer.username}"
+
+
+class GasRefiller(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='gas_refiller')
+    estate = models.ForeignKey(Estate, on_delete=models.CASCADE, related_name='gas_refillers')
+    business_name = models.CharField(max_length=200)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.business_name
+
+
+class GasItem(models.Model):
+    gas_refiller = models.ForeignKey(GasRefiller, on_delete=models.CASCADE, related_name='gas_items')
+    gas_brand = models.CharField(max_length=100)
+    kg_available = models.DecimalField(max_digits=5, decimal_places=2)
+    price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.gas_brand} - {self.gas_refiller.business_name}"
+
+
+class GasOrder(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Accepted', 'Accepted'),
+        ('Declined', 'Declined'),
+        ('Delivered', 'Delivered'),
+    ]
+    
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gas_orders')
+    gas_item = models.ForeignKey(GasItem, on_delete=models.CASCADE, related_name='orders')
+    gas_refiller = models.ForeignKey(GasRefiller, on_delete=models.CASCADE, related_name='received_gas_orders')
+    kg_ordered = models.DecimalField(max_digits=5, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, default='Pending', choices=STATUS_CHOICES)
+    response_reason = models.TextField(blank=True)
+    delivery_time = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Gas Order {self.id} - {self.customer.username}"
+
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

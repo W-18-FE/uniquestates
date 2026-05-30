@@ -1,0 +1,140 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Shop and Gas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Estate Shop and Gas Services</h2>
+            <div class="btn-group mb-3" role="group">
+                <a href="?tab=shop" class="btn {% if tab == 'shop' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    SHOP
+                </a>
+                <a href="?tab=gas" class="btn {% if tab == 'gas' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    GAS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if tab == 'shop' %}
+        <div class="row">
+            <div class="col-md-8">
+                <h4 class="mb-3">Available Shops</h4>
+                {% if shop_owners %}
+                    <div class="row">
+                        {% for owner in shop_owners %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">{{ owner.shop_name }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Owner: {{ owner.user.username }}</p>
+                                        <a href="{% url 'shop_items' owner.id %}" class="btn btn-primary btn-sm">
+                                            View Items
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No shops available at the moment. Check back later.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <h4 class="mb-3">Your Orders</h4>
+                {% if my_orders %}
+                    <div class="list-group">
+                        {% for order in my_orders %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">{{ order.shop_item.item_name }}</h6>
+                                    <span class="badge {% if order.status == 'Accepted' %}bg-success{% elif order.status == 'Declined' %}bg-danger{% elif order.status == 'Delivered' %}bg-info{% else %}bg-warning{% endif %}">
+                                        {{ order.status }}
+                                    </span>
+                                </div>
+                                <p class="mb-1 small">Qty: {{ order.quantity_ordered }} | Price: KSh {{ order.total_price }}</p>
+                                <p class="mb-0 small text-muted">{{ order.created_at|date:"d M Y" }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No shop orders yet</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-8">
+                <h4 class="mb-3">Available Gas Refillers</h4>
+                {% if gas_refillers %}
+                    <div class="row">
+                        {% for refiller in gas_refillers %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">{{ refiller.business_name }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Contact: {{ refiller.user.username }}</p>
+                                        <a href="{% url 'gas_items' refiller.id %}" class="btn btn-success btn-sm">
+                                            View Gas
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No gas refillers available at the moment. Check back later.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <h4 class="mb-3">Your Orders</h4>
+                {% if my_orders %}
+                    <div class="list-group">
+                        {% for order in my_orders %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">{{ order.gas_item.gas_brand }}</h6>
+                                    <span class="badge {% if order.status == 'Accepted' %}bg-success{% elif order.status == 'Declined' %}bg-danger{% elif order.status == 'Delivered' %}bg-info{% else %}bg-warning{% endif %}">
+                                        {{ order.status }}
+                                    </span>
+                                </div>
+                                <p class="mb-1 small">{{ order.kg_ordered }}kg | Price: KSh {{ order.total_price }}</p>
+                                <p class="mb-0 small text-muted">{{ order.created_at|date:"d M Y" }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No gas orders yet</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-group {
+        gap: 10px;
+    }
+</style>
+{% endblock %}

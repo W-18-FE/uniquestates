@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Add Shop Owner{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm mb-3">Back to Dashboard</a>
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Add Shop Owner</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">User (Username)</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Select existing user" required>
+                            <small class="form-text text-muted">The user must already exist in this estate</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="shop_name" class="form-label">Shop Name</label>
+                            <input type="text" class="form-control" id="shop_name" name="shop_name" placeholder="e.g., John's Convenience Store" required>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Add Shop Owner</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

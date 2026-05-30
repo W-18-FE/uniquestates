@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Respond to Order{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm mb-3">Back to Dashboard</a>
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Shop Order Response</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Customer:</strong> {{ order.customer.username }}</p>
+                            <p><strong>Item:</strong> {{ order.shop_item.item_name }}</p>
+                            <p><strong>Quantity:</strong> {{ order.quantity_ordered }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total Price:</strong> KSh {{ order.total_price }}</p>
+                            <p><strong>Status:</strong> <span class="badge bg-warning">{{ order.status }}</span></p>
+                            <p><strong>Order Date:</strong> {{ order.created_at|date:"d M Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'shop_order_respond' order.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="action" class="form-label">Action</label>
+                            <select class="form-select" name="action" id="action" required>
+                                <option value="">Select action...</option>
+                                <option value="accept">Accept Order</option>
+                                <option value="decline">Decline Order</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="reason_group" style="display: none;">
+                            <label for="reason" class="form-label">Reason for Decline</label>
+                            <textarea class="form-control" name="reason" id="reason" rows="3" placeholder="Explain why you're declining this order"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Send Response</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('action').addEventListener('change', function() {
+        if (this.value === 'decline') {
+            document.getElementById('reason_group').style.display = 'block';
+        } else {
+            document.getElementById('reason_group').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ refiller.business_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'shop_and_gas' %}?tab=gas" class="btn btn-outline-secondary btn-sm">Back to Gas Refillers</a>
+            <h2>{{ refiller.business_name }}</h2>
+            <p class="text-muted">Contact: {{ refiller.user.username }}</p>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        {% if items %}
+            {% for item in items %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.gas_brand }}</h5>
+                            <p class="card-text">{{ item.description|truncatewords:20 }}</p>
+                            <div class="mb-3">
+                                <p class="mb-1"><strong>Price per kg:</strong> KSh {{ item.price_per_kg }}</p>
+                                <p class="mb-1"><strong>Available:</strong> {{ item.kg_available }}kg</p>
+                            </div>
+                            <form method="post" action="{% url 'place_gas_order' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <div class="mb-2">
+                                    <label for="kg_{{ item.id }}" class="form-label">Kilograms</label>
+                                    <input type="number" class="form-control" id="kg_{{ item.id }}" name="kg" value="1" min="0.5" max="{{ item.kg_available }}" step="0.5" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Order Now</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    This refiller has no gas available at the moment.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

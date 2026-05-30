@@ -12,7 +12,8 @@ from .models import (
     Estate, UserProfile, WaterVendor, WaterOrder, GarbageSchedule,
     ServiceCategory, ServiceProvider, Booking, SecurityAlert, LostItem,
     Gig, MarketItem, BillReminder, FundiRequest, Notification,
-    EstateAdmin, CustomTab
+    EstateAdmin, CustomTab, ShopOwner, ShopItem, ShopOrder,
+    GasRefiller, GasItem, GasOrder
 )
 from .forms import (
     OrderWaterForm, ReportIncidentForm, ReportLostItemForm,
@@ -35,6 +36,25 @@ def require_permission(permission_name):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
+
+
+# ==============================================
+#  CUSTOM LOGIN VIEW
+# ==============================================
+def custom_login_view(request):
+    if request.method == 'POST':
+        from django.contrib.auth import authenticate, login
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Welcome back {username}!")
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Invalid username or password")
+    
+    return render(request, 'core/login.html')
 
 
 # ==============================================
@@ -467,10 +487,47 @@ def approve_users_view(request):
 @staff_member_required
 def admin_management_view(request):
     from django.db.models import Q as DQ
-    s = request.GET.get('search', '').strip(); tab = request.GET.get('tab', 'admins')
-    admins = EstateAdmin.objects.select_related('user', 'estate', 'approved_by').all(); users = User.objects.filter(is_superuser=False, is_staff=False).select_related('userprofile__estate')
-    if s: admins = admins.filter(DQ(user__username__icontains=s) | DQ(estate__name__icontains=s) | DQ(estate__location__icontains=s)); users = users.filter(DQ(username__icontains=s) | DQ(email__icontains=s) | DQ(userprofile__estate__name__icontains=s))
-    return render(request, 'core/admin_management.html', {'admin_data': [{'admin': a, 'user_count': UserProfile.objects.filter(estate=a.estate, user__is_superuser=False, user__is_staff=False).count(), 'estate': a.estate} for a in admins], 'all_users': users[:50], 'search': s, 'tab': tab, 'total_admins': admins.count(), 'total_users': users.count()})
+    s = request.GET.get('search', '').strip()
+    tab = request.GET.get('tab', 'admins')
+    admins = EstateAdmin.objects.select_related('user', 'estate', 'approved_by').all()
+    users = User.objects.filter(is_superuser=False, is_staff=False).select_related('userprofile__estate')
+    pending_users = User.objects.filter(is_active=False, is_superuser=False, is_staff=False)
+    
+    if s:
+        admins = admins.filter(DQ(user__username__icontains=s) | DQ(estate__name__icontains=s) | DQ(estate__location__icontains=s))
+        users = users.filter(DQ(username__icontains=s) | DQ(email__icontains=s) | DQ(userprofile__estate__name__icontains=s))
+        pending_users = pending_users.filter(DQ(username__icontains=s) | DQ(email__icontains=s))
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        
+        if action in ['approve', 'reject', 'delete']:
+            try:
+                u = User.objects.get(id=user_id)
+                if action == 'approve':
+                    u.is_active = True
+                    u.save()
+                    messages.success(request, f"Account {u.username} approved")
+                elif action == 'reject':
+                    u.delete()
+                    messages.success(request, f"Account {u.username} rejected and deleted")
+                elif action == 'delete':
+                    u.delete()
+                    messages.success(request, f"Account {u.username} deleted")
+            except User.DoesNotExist:
+                messages.error(request, "User not found")
+    
+    return render(request, 'core/admin_management.html', {
+        'admin_data': [{'admin': a, 'user_count': UserProfile.objects.filter(estate=a.estate, user__is_superuser=False, user__is_staff=False).count(), 'estate': a.estate} for a in admins],
+        'all_users': users[:50],
+        'pending_users': pending_users[:50],
+        'search': s,
+        'tab': tab,
+        'total_admins': admins.count(),
+        'total_users': users.count(),
+        'total_pending': pending_users.count(),
+    })
 
 @login_required
 @require_permission('can_manage_users')
@@ -546,3 +603,231 @@ def latest_alert_count(request):
 
 def access_denied_view(request, exception=None):
     return render(request, 'core/access_denied.html')
+
+
+# ==============================================
+#  CUSTOM LOGOUT VIEW
+# ==============================================
+@login_required
+def custom_logout_view(request):
+    username = request.user.username
+    messages.success(request, f"Thank you {username}, we hope to see you soon!")
+    from django.contrib.auth import logout
+    logout(request)
+    return redirect('login')
+
+
+# ==============================================
+#  SHOP AND GAS
+# ==============================================
+@login_required
+def shop_and_gas_view(request):
+    estate = request.user.userprofile.estate
+    tab = request.GET.get('tab', 'shop')
+    
+    if tab == 'shop':
+        shop_owners = ShopOwner.objects.filter(estate=estate, is_verified=True)
+        my_shop_orders = ShopOrder.objects.filter(customer=request.user).order_by('-created_at')[:10]
+        return render(request, 'core/shop_and_gas.html', {
+            'tab': 'shop',
+            'shop_owners': shop_owners,
+            'my_orders': my_shop_orders,
+        })
+    else:
+        gas_refillers = GasRefiller.objects.filter(estate=estate, is_verified=True)
+        my_gas_orders = GasOrder.objects.filter(customer=request.user).order_by('-created_at')[:10]
+        return render(request, 'core/shop_and_gas.html', {
+            'tab': 'gas',
+            'gas_refillers': gas_refillers,
+            'my_orders': my_gas_orders,
+        })
+
+
+@login_required
+def shop_items_view(request, owner_id):
+    owner = get_object_or_404(ShopOwner, id=owner_id)
+    items = ShopItem.objects.filter(shop_owner=owner, is_active=True)
+    return render(request, 'core/shop_items.html', {'owner': owner, 'items': items})
+
+
+@login_required
+def place_shop_order(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        quantity = int(request.POST.get('quantity', 1))
+        item = get_object_or_404(ShopItem, id=item_id)
+        total = item.price * quantity
+        order = ShopOrder.objects.create(
+            customer=request.user,
+            shop_item=item,
+            shop_owner=item.shop_owner,
+            quantity_ordered=quantity,
+            total_price=total
+        )
+        Notification.objects.create(
+            user=item.shop_owner.user,
+            title="New Shop Order",
+            message=f"{request.user.username} ordered {quantity} x {item.item_name} for KSh {total}",
+            notification_type='shop_order',
+            related_id=order.id
+        )
+        messages.success(request, "Order placed successfully!")
+        return redirect('shop_and_gas')
+    return redirect('shop_and_gas')
+
+
+@login_required
+def shop_order_respond(request, order_id):
+    order = get_object_or_404(ShopOrder, id=order_id)
+    owner = ShopOwner.objects.filter(user=request.user).first()
+    if not owner or owner != order.shop_owner:
+        messages.error(request, "Permission denied")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        reason = request.POST.get('reason', '')
+        
+        if action == 'accept':
+            order.status = 'Accepted'
+            Notification.objects.create(
+                user=order.customer,
+                title="Shop Order Accepted",
+                message=f"Your order for {order.shop_item.item_name} has been ACCEPTED by {owner.shop_name}",
+                notification_type='shop_response',
+                related_id=order.id
+            )
+        elif action == 'decline':
+            order.status = 'Declined'
+            order.response_reason = reason
+            Notification.objects.create(
+                user=order.customer,
+                title="Shop Order Declined",
+                message=f"Your order declined. Reason: {reason}",
+                notification_type='shop_response',
+                related_id=order.id
+            )
+        order.save()
+        messages.success(request, "Response sent")
+        return redirect('dashboard')
+    
+    return render(request, 'core/shop_order_respond.html', {'order': order, 'owner': owner})
+
+
+@login_required
+def gas_items_view(request, refiller_id):
+    refiller = get_object_or_404(GasRefiller, id=refiller_id)
+    items = GasItem.objects.filter(gas_refiller=refiller, is_active=True)
+    return render(request, 'core/gas_items.html', {'refiller': refiller, 'items': items})
+
+
+@login_required
+def place_gas_order(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        kg = float(request.POST.get('kg', 1))
+        item = get_object_or_404(GasItem, id=item_id)
+        total = item.price_per_kg * kg
+        order = GasOrder.objects.create(
+            customer=request.user,
+            gas_item=item,
+            gas_refiller=item.gas_refiller,
+            kg_ordered=kg,
+            total_price=total
+        )
+        Notification.objects.create(
+            user=item.gas_refiller.user,
+            title="New Gas Order",
+            message=f"{request.user.username} ordered {kg}kg of {item.gas_brand} for KSh {total}",
+            notification_type='gas_order',
+            related_id=order.id
+        )
+        messages.success(request, "Gas order placed successfully!")
+        return redirect('shop_and_gas')
+    return redirect('shop_and_gas')
+
+
+@login_required
+def gas_order_respond(request, order_id):
+    order = get_object_or_404(GasOrder, id=order_id)
+    refiller = GasRefiller.objects.filter(user=request.user).first()
+    if not refiller or refiller != order.gas_refiller:
+        messages.error(request, "Permission denied")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        reason = request.POST.get('reason', '')
+        
+        if action == 'accept':
+            order.status = 'Accepted'
+            Notification.objects.create(
+                user=order.customer,
+                title="Gas Order Accepted",
+                message=f"Your gas order for {order.gas_item.gas_brand} has been ACCEPTED by {refiller.business_name}",
+                notification_type='gas_response',
+                related_id=order.id
+            )
+        elif action == 'decline':
+            order.status = 'Declined'
+            order.response_reason = reason
+            Notification.objects.create(
+                user=order.customer,
+                title="Gas Order Declined",
+                message=f"Your gas order declined. Reason: {reason}",
+                notification_type='gas_response',
+                related_id=order.id
+            )
+        order.save()
+        messages.success(request, "Response sent")
+        return redirect('dashboard')
+    
+    return render(request, 'core/gas_order_respond.html', {'order': order, 'refiller': refiller})
+
+
+@login_required
+@require_permission('can_manage_services')
+def admin_add_shop_owner(request):
+    try:
+        ea = EstateAdmin.objects.get(user=request.user, is_subscribed=True)
+    except EstateAdmin.DoesNotExist:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        shop_name = request.POST.get('shop_name', '').strip()
+        
+        if username and shop_name:
+            try:
+                user = User.objects.get(username=username, userprofile__estate=ea.estate)
+                ShopOwner.objects.create(user=user, estate=ea.estate, shop_name=shop_name, is_verified=True)
+                messages.success(request, f"Shop owner {shop_name} added successfully")
+            except User.DoesNotExist:
+                messages.error(request, "User not found in this estate")
+        
+        return redirect('dashboard')
+    return render(request, 'core/admin_add_shop_owner.html')
+
+
+@login_required
+@require_permission('can_manage_services')
+def admin_add_gas_refiller(request):
+    try:
+        ea = EstateAdmin.objects.get(user=request.user, is_subscribed=True)
+    except EstateAdmin.DoesNotExist:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        business_name = request.POST.get('business_name', '').strip()
+        
+        if username and business_name:
+            try:
+                user = User.objects.get(username=username, userprofile__estate=ea.estate)
+                GasRefiller.objects.create(user=user, estate=ea.estate, business_name=business_name, is_verified=True)
+                messages.success(request, f"Gas refiller {business_name} added successfully")
+            except User.DoesNotExist:
+                messages.error(request, "User not found in this estate")
+        
+        return redirect('dashboard')
+    return render(request, 'core/admin_add_gas_refiller.html')

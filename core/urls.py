@@ -73,6 +73,17 @@ urlpatterns = [
     # Delete Broadcast (estate admins)
     path('delete-broadcast/<int:notification_id>/', views.delete_broadcast, name='delete_broadcast'),
     
+    # Shop and Gas
+    path('shop-and-gas/', views.shop_and_gas_view, name='shop_and_gas'),
+    path('shop-items/<int:owner_id>/', views.shop_items_view, name='shop_items'),
+    path('place-shop-order/', views.place_shop_order, name='place_shop_order'),
+    path('shop-order-respond/<int:order_id>/', views.shop_order_respond, name='shop_order_respond'),
+    path('gas-items/<int:refiller_id>/', views.gas_items_view, name='gas_items'),
+    path('place-gas-order/', views.place_gas_order, name='place_gas_order'),
+    path('gas-order-respond/<int:order_id>/', views.gas_order_respond, name='gas_order_respond'),
+    path('admin-add-shop-owner/', views.admin_add_shop_owner, name='admin_add_shop_owner'),
+    path('admin-add-gas-refiller/', views.admin_add_gas_refiller, name='admin_add_gas_refiller'),
+    
     # API: Live Alert Count
     path('api/latest-alert-count/', views.latest_alert_count, name='latest_alert_count'),
     
