@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-)tqp2#efeei*wf3p&&b0%tmi)u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 'yes']
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,estatelink-app.onrender.com').split(',') if host.strip()]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,uniquestates.onrender.com').split(',') if host.strip()]
 
 
 # Application definition
@@ -148,7 +148,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CSRF and Security settings for production
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost,http://127.0.0.1,https://estatelink-app.onrender.com'
+    'http://localhost,http://127.0.0.1,https://uniquestates.onrender.com'
 ).split(',') if origin.strip()]
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG

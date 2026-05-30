@@ -33,8 +33,8 @@ A Django-based estate management application built for managing properties, util
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/estatelink-app.git
-cd estatelink-app
+git clone https://github.com/YOUR_USERNAME/uniquestates.git
+cd uniquestates
 
 # Create virtual environment
 python -m venv venv

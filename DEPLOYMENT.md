@@ -15,10 +15,10 @@ This Django application is ready to be deployed on Render.com. All necessary con
 
 ```bash
 # Create a new repository on GitHub at https://github.com/new
-# Name it: estatelink-app
+# Name it: uniquestates
 
 # Then run these commands:
-git remote add origin https://github.com/YOUR_USERNAME/estatelink-app.git
+git remote add origin https://github.com/YOUR_USERNAME/uniquestates.git
 git branch -M main
 git push -u origin main
 ```
@@ -31,11 +31,11 @@ git push -u origin main
 2. **Connect GitHub Repository**
    - Go to Render Dashboard → New → Web Service
    - Connect your GitHub account
-   - Select `estatelink-app` repository
+   - Select `uniquestates` repository
    - Choose branch: `main`
 
 3. **Configure Build and Deploy Settings**
-   - **Name**: estatelink-app (or any name you prefer)
+   - **Name**: uniquestates (or any name you prefer)
    - **Runtime**: Python 3.10
    - **Build Command**: `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py create_superuser`
    - **Start Command**: `gunicorn config.wsgi:application`
@@ -44,8 +44,8 @@ git push -u origin main
    ```
    DEBUG = False
    SECRET_KEY = (from .env - django-insecure-9x#@$%^&*()_+-=[]{}|;:,.<>?/~`felixestatelink2026)
-   ALLOWED_HOSTS = estatelink-app.onrender.com,localhost,127.0.0.1
-   CSRF_TRUSTED_ORIGINS = https://estatelink-app.onrender.com,http://localhost
+   ALLOWED_HOSTS = uniquestates.onrender.com,localhost,127.0.0.1
+   CSRF_TRUSTED_ORIGINS = https://uniquestates.onrender.com,http://localhost
    ```
 
 5. **Add PostgreSQL Database** (optional but recommended)
@@ -62,10 +62,10 @@ git push -u origin main
 
 After deployment completes:
 
-1. **Access the app**: https://estatelink-app.onrender.com (replace with your actual URL)
+1. **Access the app**: https://uniquestates.onrender.com (replace with your actual URL)
 
 2. **Login to Admin Panel**
-   - Go to: https://estatelink-app.onrender.com/admin/
+   - Go to: https://uniquestates.onrender.com/admin/
    - **Username**: felix
    - **Password**: 171630m
    - **Email**: felixochieng5785@gmail.com
